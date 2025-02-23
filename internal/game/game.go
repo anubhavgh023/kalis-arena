@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -54,10 +53,6 @@ func (gs *gameState) GetPlayer(id string) (Player, bool) {
 func (gs *gameState) Broadcast(msg PlayerMsg) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
-
-	fmt.Println("================")
-	fmt.Printf("ACTIVE CONNS: %d\n", len(gs.conns))
-	fmt.Println("================")
 
 	for _, conn := range gs.conns {
 		conn.WriteJSON(msg)

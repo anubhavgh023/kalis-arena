@@ -88,14 +88,12 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Notify all client about new player
-	fmt.Println("Broadcasting player joined:", playerID, "Color:", playerColor)
 	wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerJoin, playerID, randPosX, randPosY, playerColor))
 
 	// Handle incoming messages
 	for {
 		var msg game.PlayerMsg
 		err := conn.ReadJSON(&msg)
-		fmt.Println(msg)
 		if err != nil {
 			log.Println("Websocket read error:", err)
 			wsh.gameState.RemovePlayer(playerID)

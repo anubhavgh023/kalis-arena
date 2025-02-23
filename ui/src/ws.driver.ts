@@ -16,7 +16,7 @@ export class WsConnDriver {
 
     constructor(game: Game) {
         this.game = game;
-        this.ws = new WebSocket("ws://localhost:8080");
+        this.ws = new WebSocket("ws://localhost:8080/ws");
 
         this.ws.addEventListener("open", () => {
             console.log("WEBSOCKET CONNECTED.")

@@ -15,8 +15,17 @@ func main() {
 	wsHandler := handlers.NewWsHandler(gameState)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", wsHandler.HandleConns)
 
-	log.Println("Server Listening on PORT:", PORT)
-	http.ListenAndServe(PORT, mux)
+	fs := http.FileServer(http.Dir("ui/dist"))
+	mux.Handle("/", fs)
+	mux.HandleFunc("/ws", wsHandler.HandleConns)
+
+	log.Println("Stating server at PORT", PORT)
+	err := http.ListenAndServe(PORT, mux)
+
+	log.Println("Stating server at PORT", PORT)
+	err = http.ListenAndServe(PORT, mux)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

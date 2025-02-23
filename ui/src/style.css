@@ -31,12 +31,12 @@ canvas {
 .stat-container {
     display: flex;
     justify-content: center;
-    /*position: absolute;*/
+    position: absolute;
     font-size: 2.8rem;
     width: fit-content;
     padding: 12px;
-    /*top: 8px;*/
-    /*left: 4px;*/
+    top: 8px;
+    left: 4px;
     color: #aaa;
     border: 2px gray dashed;
     margin-top: 2px;

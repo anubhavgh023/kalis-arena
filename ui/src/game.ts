@@ -1,5 +1,6 @@
 import { Player } from "./player";
 import { WsConnDriver } from "./ws.driver";
+import { MapGenerator } from "./utils/hex";
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -7,6 +8,7 @@ export class Game {
     private players: Map<string, Player>;
     private wsConDriver: WsConnDriver;
     private localPlayerID: string | null = null;
+    private mapGen: MapGenerator
 
     //measure fps 
     private lastTime: number;
@@ -21,6 +23,11 @@ export class Game {
         this.lastTime = performance.now();
         this.frameCount = 0;
         this.fps = 0;
+
+
+        // gen con
+        this.mapGen = new MapGenerator(40);
+        this.mapGen.generateMap(canvas.width, canvas.height);
 
 
         window.addEventListener("keydown", e => {
@@ -41,7 +48,7 @@ export class Game {
                             localPlayer.y += localPlayer.velY;
                             break;
                     }
-                    this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y);
+                    this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "");
                 }
             }
         })
@@ -77,9 +84,12 @@ export class Game {
             fpsElem.textContent = String(this.fps);
         }
 
+
         // Clear the canvas
         this.ctx.fillStyle = "rgb(0 0 0 / 25%)";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        this.mapGen.drawMap(this.ctx);
 
         // Draw all players
         this.players.forEach(player => {

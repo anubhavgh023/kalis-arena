@@ -25,19 +25,20 @@ canvas {
     display: flex;
     justify-content: center;
     margin-inline: auto;
+    margin-bottom: 20px;
 }
 
 .stat-container {
     display: flex;
     justify-content: center;
-    position: absolute;
-    font-size: 3.2rem;
-    width: 256px;
-    margin: 0;
-    top: 8px;
-    left: 4px;
+    /*position: absolute;*/
+    font-size: 2.8rem;
+    width: fit-content;
+    padding: 12px;
+    /*top: 8px;*/
+    /*left: 4px;*/
     color: #aaa;
-    border: 2px whitesmoke dotted;
+    border: 2px gray dashed;
     margin-top: 2px;
     margin-left: 4px;
 }

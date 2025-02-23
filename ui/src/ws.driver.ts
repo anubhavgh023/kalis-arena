@@ -23,7 +23,7 @@ export class WsConnDriver {
         });
 
         this.ws.addEventListener("message", e => {
-            const data = JSON.parse(e.data);
+            const data = JSON.parse(e.data) as PlayerState;
             this.handleMessage(data);
         })
     }
@@ -32,10 +32,10 @@ export class WsConnDriver {
         switch (data.type) {
             case "playerId":
                 this.playerId = data.id;
-                console.log(data.color);
                 this.game.setLocalPlayerId(data.id, data.color)
                 break
             case "playerJoined":
+                console.log("Player Joined:", data.id, "color:", data.color);
                 const newPlayer = new Player(data.x, data.y, data.color);
                 this.game.addPlayer(data.id, newPlayer);
                 break;

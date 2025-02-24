@@ -12,7 +12,6 @@ type GameState interface {
 	GetPlayer(id string) (Player, bool)
 	Broadcast(msg PlayerMsg)
 	GetAllPlayers() map[string]Player
-	UpdatePlayerPosition(id string, player Player)
 }
 
 type gameState struct {
@@ -65,13 +64,4 @@ func (gs *gameState) GetAllPlayers() map[string]Player {
 	defer gs.mu.RUnlock()
 
 	return gs.players
-}
-
-func (gs *gameState) UpdatePlayerPosition(id string, updatedPlayer Player) {
-	gs.mu.Lock()
-	defer gs.mu.Unlock()
-
-	if _, exists := gs.players[id]; exists {
-		gs.players[id] = updatedPlayer
-	}
 }

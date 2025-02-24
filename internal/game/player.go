@@ -1,8 +1,8 @@
 package game
 
 type Player struct {
-	ID    string  `json:"id"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Color string  `json:"color"`
+	ID    string `json:"id"`
+	X     int    `json:"x"`
+	Y     int    `json:"y"`
+	Color string `json:"color"`
 }

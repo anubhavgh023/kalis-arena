@@ -16,6 +16,7 @@ export class Game {
     private wsConDriver: WsConnDriver;
     private localPlayerID: string | null = null;
     private mapRender: MapRenderer
+    private postionUpdateInterval: number | null = null;
 
     //measure fps 
     private lastTime: number;
@@ -30,6 +31,14 @@ export class Game {
         this.lastTime = performance.now();
         this.frameCount = 0;
         this.fps = 0;
+
+        // delta postion update
+        this.postionUpdateInterval = window.setInterval(() => {
+            if (this.localPlayerID) {
+                const localPlayer = this.players.get(this.localPlayerID)!;
+                this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "")
+            }
+        }, 200);
 
 
         // generate map layout
@@ -55,6 +64,12 @@ export class Game {
         })
     }
 
+    public cleanup() {
+        if (this.postionUpdateInterval !== null) {
+            clearInterval(this.postionUpdateInterval);
+        }
+    }
+
     public move() {
         if (this.localPlayerID) {
             const localPlayer = this.players.get(this.localPlayerID)!;
@@ -73,7 +88,6 @@ export class Game {
             if (Keys.right) {
                 localPlayer.x += 10;
             }
-            this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "");
         }
     }
 

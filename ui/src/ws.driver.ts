@@ -35,7 +35,6 @@ export class WsConnDriver {
                 this.game.setLocalPlayerId(data.id, data.color)
                 break
             case "playerJoined":
-                console.log("Player Joined:", data.id, "color:", data.color);
                 const newPlayer = new Player(data.x, data.y, data.color);
                 this.game.addPlayer(data.id, newPlayer);
                 break;

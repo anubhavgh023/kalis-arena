@@ -12,7 +12,7 @@ export class Player {
         this.velX = 20;
         this.velY = 20;
         this.color = color;
-        this.size = 40;
+        this.size = 20;
 
     };
 

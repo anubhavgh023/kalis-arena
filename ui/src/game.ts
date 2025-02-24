@@ -25,7 +25,7 @@ export class Game {
         this.fps = 0;
 
 
-        // gen con
+        // generate map layout
         this.mapGen = new MapGenerator(40);
         this.mapGen.generateMap(canvas.width, canvas.height);
 
@@ -34,25 +34,14 @@ export class Game {
             if (this.localPlayerID) {
                 const localPlayer = this.players.get(this.localPlayerID);
                 if (localPlayer) {
-                    switch (e.key) {
-                        case "ArrowLeft":
-                            localPlayer.x -= localPlayer.velX;
-                            break;
-                        case "ArrowRight":
-                            localPlayer.x += localPlayer.velX;
-                            break;
-                        case "ArrowUp":
-                            localPlayer.y -= localPlayer.velY;
-                            break;
-                        case "ArrowDown":
-                            localPlayer.y += localPlayer.velY;
-                            break;
-                    }
+                    if (e.key === "ArrowLeft" || e.key === "a") localPlayer.x -= localPlayer.velX;
+                    if (e.key === "ArrowRight" || e.key === "d") localPlayer.x += localPlayer.velX;
+                    if (e.key === "ArrowUp" || e.key === "w") localPlayer.y -= localPlayer.velY;
+                    if (e.key === "ArrowDown" || e.key === "s") localPlayer.y += localPlayer.velY;
                     this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "");
                 }
             }
         })
-
     }
 
     public run() {
@@ -89,11 +78,13 @@ export class Game {
         this.ctx.fillStyle = "rgb(0 0 0 / 25%)";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
+        // Draw map
         this.mapGen.drawMap(this.ctx);
 
         // Draw all players
         this.players.forEach(player => {
-            player.draw(this.ctx)
+            player.drawDomain(this.ctx);
+            player.drawPlayer(this.ctx);
             player.checkBound(this.canvas.width, this.canvas.height);
         })
 

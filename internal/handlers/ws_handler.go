@@ -53,7 +53,6 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	// Add player to the game state
 	randPosX := rand.Float64()*560 + 24
 	randPosY := rand.Float64()*560 + 24
-
 	wsh.gameState.AddPlayer(playerID, game.Player{
 		ID:    playerID,
 		X:     randPosX,
@@ -101,8 +100,25 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 
-		// Update player position
-		wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerMove, playerID, msg.X, msg.Y, ""))
-		fmt.Printf("[PLAYER MOVED]> ID: %s; X: %.3f; Y: %.3f\n", playerID[:8], msg.X, msg.Y)
+		// Handle delta or absolute updates
+		if msg.UpdateType == "delta" {
+			updatedPlayer, exists := wsh.gameState.GetPlayer(playerID)
+			if exists {
+				updatedPlayer.X += msg.X
+				updatedPlayer.Y += msg.Y
+
+				wsh.gameState.UpdatePlayerPosition(playerID, updatedPlayer)
+
+				// Broadcast delta update
+				updateMsg := game.NewPlayerDeltaMsg(game.MsgTypePlayerMove, playerID, msg.X, msg.Y)
+				wsh.gameState.Broadcast(updateMsg)
+
+				fmt.Printf("[PLAYER MOVED DELTA]> ID: %s; dX: %.3f; dY: %.3f\n", playerID[:8], msg.X, msg.Y)
+			}
+		} else {
+			// Broadcast updated player abosolute position
+			wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerMove, playerID, msg.X, msg.Y, ""))
+			fmt.Printf("[PLAYER MOVED]> ID: %s; X: %.3f; Y: %.3f\n", playerID[:8], msg.X, msg.Y)
+		}
 	}
 }

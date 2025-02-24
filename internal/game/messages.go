@@ -10,19 +10,33 @@ const (
 )
 
 type PlayerMsg struct {
-	Type  MsgType `json:"type"`
-	ID    string  `json:"id"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Color string  `json:"color"`
+	Type       MsgType `json:"type"`
+	ID         string  `json:"id"`
+	X          float64 `json:"x"`
+	Y          float64 `json:"y"`
+	Color      string  `json:"color"`
+	UpdateType string  `json:"updateType,omitempty"`
 }
 
 func NewPlayerMsg(msgType MsgType, id string, x, y float64, color string) PlayerMsg {
 	return PlayerMsg{
-		Type:  msgType,
-		ID:    id,
-		X:     x,
-		Y:     y,
-		Color: color,
+		Type:       msgType,
+		ID:         id,
+		X:          x,
+		Y:          y,
+		Color:      color,
+		UpdateType: "absolute",
+	}
+}
+
+// NewPlayerDeltaMsg creates a new delta-based player message
+func NewPlayerDeltaMsg(msgType MsgType,id string,  deltaX, deltaY float64) PlayerMsg {
+	return PlayerMsg{
+		Type:       msgType,
+		ID:         id,
+		X:          deltaX,
+		Y:          deltaY,
+		Color:      "",
+		UpdateType: "delta",
 	}
 }

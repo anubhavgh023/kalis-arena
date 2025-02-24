@@ -7,6 +7,7 @@ type PlayerState = {
     x: number;
     y: number;
     color: string;
+    updateType?: "abolute" | "delta"
 }
 
 export class WsConnDriver {
@@ -39,10 +40,14 @@ export class WsConnDriver {
                 this.game.addPlayer(data.id, newPlayer);
                 break;
             case "playerMoved":
-                const player = this.game.getPlayer(data.id);
-                if (player) {
-                    player.x = data.x;
-                    player.y = data.y;
+                if (data.updateType === "delta") {
+                    this.game.updatePlayerPosition(data.id, data.x, data.y);
+                } else {
+                    const player = this.game.getPlayer(data.id);
+                    if (player) {
+                        player.x = data.x;
+                        player.y = data.y;
+                    }
                 }
                 break;
             case "playerLeft":
@@ -51,14 +56,15 @@ export class WsConnDriver {
         }
     }
 
-    public sendPlayerPosition(x: number, y: number, color: string) {
+    public sendPlayerPosition(x: number, y: number, updateType: string) {
         if (this.playerId) {
             const msg: PlayerState = {
                 id: this.playerId,
                 type: "playerMoved",
                 x,
                 y,
-                color,
+                color: "",
+                updateType: updateType === "delta" ? "delta" : "abolute",
             };
             this.ws.send(JSON.stringify(msg));
         }

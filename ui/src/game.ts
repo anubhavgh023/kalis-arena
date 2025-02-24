@@ -2,6 +2,13 @@ import { Player } from "./player";
 import { WsConnDriver } from "./ws.driver";
 import { MapGenerator } from "./utils/hex";
 
+const Keys = {
+    up: false,
+    down: false,
+    left: false,
+    right: false,
+}
+
 export class Game {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -29,19 +36,45 @@ export class Game {
         this.mapGen = new MapGenerator(40);
         this.mapGen.generateMap(canvas.width, canvas.height);
 
-
         window.addEventListener("keydown", e => {
-            if (this.localPlayerID) {
-                const localPlayer = this.players.get(this.localPlayerID);
-                if (localPlayer) {
-                    if (e.key === "ArrowLeft" || e.key === "a") localPlayer.x -= localPlayer.velX;
-                    if (e.key === "ArrowRight" || e.key === "d") localPlayer.x += localPlayer.velX;
-                    if (e.key === "ArrowUp" || e.key === "w") localPlayer.y -= localPlayer.velY;
-                    if (e.key === "ArrowDown" || e.key === "s") localPlayer.y += localPlayer.velY;
-                    this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "");
-                }
-            }
+            e.preventDefault();
+            if (e.key === "ArrowUp" || e.key === "w") Keys.up = true;
+            if (e.key === "ArrowLeft" || e.key === "a") Keys.left = true;
+            if (e.key === "ArrowDown" || e.key === "s") Keys.down = true;
+            if (e.key === "ArrowRight" || e.key === "d") Keys.right = true;
+            this.move()
         })
+
+        window.addEventListener("keyup", e => {
+            e.preventDefault();
+            if (e.key === "ArrowUp" || e.key === "w") Keys.up = false;
+            if (e.key === "ArrowLeft" || e.key === "a") Keys.left = false;
+            if (e.key === "ArrowDown" || e.key === "s") Keys.down = false;
+            if (e.key === "ArrowRight" || e.key === "d") Keys.right = false;
+            this.move()
+        })
+    }
+
+    public move() {
+        if (this.localPlayerID) {
+            const localPlayer = this.players.get(this.localPlayerID)!;
+            if (Keys.up) {
+                localPlayer.y -= 10;
+            }
+
+            if (Keys.down) {
+                localPlayer.y += 10;
+            }
+
+            if (Keys.left) {
+                localPlayer.x -= 10;
+            }
+
+            if (Keys.right) {
+                localPlayer.x += 10;
+            }
+            this.wsConDriver.sendPlayerPosition(localPlayer.x, localPlayer.y, "");
+        }
     }
 
     public run() {
@@ -87,6 +120,7 @@ export class Game {
             player.drawPlayer(this.ctx);
             player.checkBound(this.canvas.width, this.canvas.height);
         })
+
 
         this.frameCount++
         requestAnimationFrame(() => this.gameLoop());

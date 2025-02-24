@@ -16,11 +16,6 @@ export class Player {
 
     };
 
-    public updatePosition(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
-
     drawPlayer(ctx: CanvasRenderingContext2D) {
         // player
         ctx.beginPath();

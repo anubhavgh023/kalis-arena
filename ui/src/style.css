@@ -31,8 +31,8 @@ canvas {
 .stat-container {
     display: flex;
     justify-content: center;
-    position: absolute;
-    font-size: 1.25rem;
+    /*position: absolute;*/
+    font-size: 3.25rem;
     width: fit-content;
     padding: 8px;
     top: 8px;

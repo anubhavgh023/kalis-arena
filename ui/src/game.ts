@@ -1,6 +1,6 @@
 import { Player } from "./player";
 import { WsConnDriver } from "./ws.driver";
-import { MapGenerator } from "./utils/hex";
+import { MapRenderer } from "./utils/mapRenderer";
 
 const Keys = {
     up: false,
@@ -15,7 +15,7 @@ export class Game {
     private players: Map<string, Player>;
     private wsConDriver: WsConnDriver;
     private localPlayerID: string | null = null;
-    private mapGen: MapGenerator
+    private mapRender: MapRenderer
 
     //measure fps 
     private lastTime: number;
@@ -33,8 +33,8 @@ export class Game {
 
 
         // generate map layout
-        this.mapGen = new MapGenerator(40);
-        this.mapGen.generateMap(canvas.width, canvas.height);
+        this.mapRender = new MapRenderer();
+        // this.mapGen.generateMap(canvas.width, canvas.height);
 
         window.addEventListener("keydown", e => {
             e.preventDefault();
@@ -112,7 +112,7 @@ export class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         // Draw map
-        this.mapGen.drawMap(this.ctx);
+        this.mapRender.drawMap(this.ctx);
 
         // Draw all players
         this.players.forEach(player => {

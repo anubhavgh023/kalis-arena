@@ -5,7 +5,7 @@ import (
 	"log"
 	"math/rand/v2"
 	"net/http"
-	"os/exec"
+	"strconv"
 
 	"github.com/anubhavgh023/kalis-arena/internal/game"
 	"github.com/anubhavgh023/kalis-arena/internal/utils"
@@ -39,13 +39,13 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// Generate a unique ID for the player
-	uuid, err := exec.Command("uuidgen").Output()
-	if err != nil {
-		log.Println("ERROR generating uuid:", err)
-	}
+	// // Generate a unique ID for the player
+	// uuid, err := exec.Command("uuidgen").Output()
+	// if err != nil {
+	// 	log.Println("ERROR generating uuid:", err)
+	// }
 
-	playerID := string(uuid)
+	playerID := strconv.Itoa(len(wsh.gameState.GetAllPlayers()) + 1)
 
 	// Assigning color
 	playerColor := utils.GenerateRandomColor()
@@ -59,7 +59,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		Y:     randPosY,
 		Color: playerColor,
 	}, conn)
-	fmt.Printf("[PLAYER JOINED]> ID: %s; X: %d; Y: %d\n", playerID[:8], randPosX, randPosY)
+	fmt.Printf("[PLAYER JOINED]> ID: %s; X: %d; Y: %d\n", playerID, randPosX, randPosY)
 
 	// Send the playerID & color back to the frontend
 	playerData := game.NewPlayerMsg(game.MsgTypePlayerID, playerID, randPosX, randPosY, playerColor)
@@ -102,6 +102,6 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 
 		// Update player position
 		wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerMove, playerID, msg.X, msg.Y, ""))
-		fmt.Printf("[PLAYER MOVED]> ID: %s; X: %d; Y: %d\n", playerID[:8], msg.X, msg.Y)
+		fmt.Printf("[PLAYER MOVED]> ID: %s; X: %d; Y: %d\n", playerID, msg.X, msg.Y)
 	}
 }

@@ -1,20 +1,46 @@
 export class Player {
     public x: number;
     public y: number;
-    public velX: number;
-    public velY: number;
+    private moveSpeed: number;
+    private keys = {
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+    }
     public color: string;
     private size: number;
     private dashOffset: number = 0;
     constructor(x: number, y: number, color: string) {
         this.x = x;
         this.y = y;
-        this.velX = 20;
-        this.velY = 20;
+        this.moveSpeed = 14;
         this.color = color;
         this.size = 20;
 
     };
+
+    handleKeyDown(key: string) {
+        if (key === "ArrowUp" || key === "w") this.keys.up = true;
+        if (key === "ArrowLeft" || key === "a") this.keys.left = true;
+        if (key === "ArrowDown" || key === "s") this.keys.down = true;
+        if (key === "ArrowRight" || key === "d") this.keys.right = true;
+    }
+
+    handleKeyUp(key: string) {
+        if (key === "ArrowUp" || key === "w") this.keys.up = false;
+        if (key === "ArrowLeft" || key === "a") this.keys.left = false;
+        if (key === "ArrowDown" || key === "s") this.keys.down = false;
+        if (key === "ArrowRight" || key === "d") this.keys.right = false;
+    }
+
+    public move() {
+        if (this.keys.up) this.y -= this.moveSpeed
+        if (this.keys.down) this.y += this.moveSpeed
+        if (this.keys.left) this.x -= this.moveSpeed
+        if (this.keys.right) this.x += this.moveSpeed
+        console.log(this.x, this.y)
+    }
 
     drawPlayer(ctx: CanvasRenderingContext2D) {
         // player

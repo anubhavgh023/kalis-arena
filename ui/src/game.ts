@@ -2,13 +2,6 @@ import { Player } from "./player";
 import { WsConnDriver } from "./ws.driver";
 import { MapRenderer } from "./utils/mapRenderer";
 
-const Keys = {
-    up: false,
-    down: false,
-    left: false,
-    right: false,
-}
-
 export class Game {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -16,7 +9,6 @@ export class Game {
     private wsConDriver: WsConnDriver;
     private localPlayerID: string | null = null;
     private mapRender: MapRenderer
-    private moveSpeed: number = 14
 
     //measure fps 
     private lastTime: number;
@@ -35,45 +27,30 @@ export class Game {
 
         // generate map layout
         this.mapRender = new MapRenderer();
-        // this.mapGen.generateMap(canvas.width, canvas.height);
 
         window.addEventListener("keydown", e => {
             e.preventDefault();
-            if (e.key === "ArrowUp" || e.key === "w") Keys.up = true;
-            if (e.key === "ArrowLeft" || e.key === "a") Keys.left = true;
-            if (e.key === "ArrowDown" || e.key === "s") Keys.down = true;
-            if (e.key === "ArrowRight" || e.key === "d") Keys.right = true;
-            this.move()
+            if (this.localPlayerID) {
+                const localPlayer = this.players.get(this.localPlayerID)!;
+                localPlayer.handleKeyDown(e.key);
+            }
+            this.updatePlayerPosition()
         })
 
         window.addEventListener("keyup", e => {
             e.preventDefault();
-            if (e.key === "ArrowUp" || e.key === "w") Keys.up = false;
-            if (e.key === "ArrowLeft" || e.key === "a") Keys.left = false;
-            if (e.key === "ArrowDown" || e.key === "s") Keys.down = false;
-            if (e.key === "ArrowRight" || e.key === "d") Keys.right = false;
-            this.move()
+            if (this.localPlayerID) {
+                const localPlayer = this.players.get(this.localPlayerID)!;
+                localPlayer.handleKeyUp(e.key);
+            }
         })
+
     }
 
-    public move() {
+    public updatePlayerPosition() {
         if (this.localPlayerID) {
             const localPlayer = this.players.get(this.localPlayerID)!;
-            if (Keys.up) {
-                localPlayer.y -= this.moveSpeed;
-            }
-
-            if (Keys.down) {
-                localPlayer.y += this.moveSpeed;
-            }
-
-            if (Keys.left) {
-                localPlayer.x -= this.moveSpeed;
-            }
-
-            if (Keys.right) {
-                localPlayer.x += this.moveSpeed;
-            }
+            localPlayer.move()
             this.wsConDriver.sendPlayerPosition(Math.round(localPlayer.x), Math.round(localPlayer.y), "");
         }
     }
@@ -121,7 +98,6 @@ export class Game {
             player.drawPlayer(this.ctx);
             player.checkBound(this.canvas.width, this.canvas.height);
         })
-
 
         this.frameCount++
         requestAnimationFrame(() => this.gameLoop());

@@ -1,13 +1,7 @@
 import { Game } from "./game";
 import { Player } from "./player";
+import { PlayerState } from "./types";
 
-type PlayerState = {
-    id: string
-    type: "playerId" | "playerJoined" | "playerMoved" | "playerLeft";
-    x: number;
-    y: number;
-    color: string;
-}
 
 export class WsConnDriver {
     private ws: WebSocket;

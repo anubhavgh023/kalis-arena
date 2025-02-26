@@ -51,18 +51,25 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	playerColor := utils.GenerateRandomColor()
 
 	// Add player to the game state
-	randPosX := rand.IntN(1)*560 + 24
-	randPosY := rand.IntN(1)*560 + 24
-	wsh.gameState.AddPlayer(playerID, game.Player{
+	randPosX := rand.IntN(2)*560 + 24
+	randPosY := rand.IntN(2)*160 + 24
+	newPlayer := game.Player{
 		ID:    playerID,
 		X:     randPosX,
 		Y:     randPosY,
 		Color: playerColor,
-	}, conn)
+	}
+	wsh.gameState.AddPlayer(playerID, newPlayer, conn)
 	fmt.Printf("[PLAYER JOINED]> ID: %s; X: %d; Y: %d\n", playerID, randPosX, randPosY)
 
 	// Send the playerID & color back to the frontend
-	playerData := game.NewPlayerMsg(game.MsgTypePlayerID, playerID, randPosX, randPosY, playerColor)
+	playerData := game.NewPlayerMsg(
+		game.MsgTypePlayerID,
+		playerID,
+		randPosX,
+		randPosY,
+		playerColor,
+	)
 	err = conn.WriteJSON(playerData)
 	if err != nil {
 		log.Println("ERROR writing json data:", err)
@@ -87,7 +94,17 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Notify all client about new player
-	wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerJoin, playerID, randPosX, randPosY, playerColor))
+	broadcastMsgPlayerJoined := game.NewPlayerMsg(
+		game.MsgTypePlayerJoin,
+		playerID,
+		randPosX,
+		randPosY,
+		playerColor,
+	)
+	wsh.gameState.Broadcast(broadcastMsgPlayerJoined)
+
+	// store incoming msg
+	msgChan := make(chan game.PlayerMsg)
 
 	// Handle incoming messages
 	for {
@@ -95,13 +112,28 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Println("Websocket read error:", err)
+
 			wsh.gameState.RemovePlayer(playerID)
-			wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerLeave, playerID, randPosX, randPosY, ""))
+			broadcastMsgPlayerLeave := game.NewPlayerMsg(
+				game.MsgTypePlayerLeave,
+				playerID,
+				randPosX,
+				randPosY,
+				"",
+			)
+			wsh.gameState.Broadcast(broadcastMsgPlayerLeave)
 			break
 		}
 
 		// Update player position
-		wsh.gameState.Broadcast(game.NewPlayerMsg(game.MsgTypePlayerMove, playerID, msg.X, msg.Y, ""))
+		broadcastMsgPlayerMove := game.NewPlayerMsg(
+			game.MsgTypePlayerMove,
+			playerID,
+			msg.X,
+			msg.Y,
+			"",
+		)
+		wsh.gameState.Broadcast(broadcastMsgPlayerMove)
 		fmt.Printf("[PLAYER MOVED]> ID: %s; X: %d; Y: %d\n", playerID, msg.X, msg.Y)
 	}
 }

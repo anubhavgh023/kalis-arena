@@ -103,9 +103,6 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	)
 	wsh.gameState.Broadcast(broadcastMsgPlayerJoined)
 
-	// store incoming msg
-	msgChan := make(chan game.PlayerMsg)
-
 	// Handle incoming messages
 	for {
 		var msg game.PlayerMsg

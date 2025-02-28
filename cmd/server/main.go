@@ -16,6 +16,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	go wsHandler.StartGameLoop()
+
 	fs := http.FileServer(http.Dir("ui/dist"))
 	mux.Handle("/", fs)
 	mux.HandleFunc("/ws", wsHandler.HandleConns)

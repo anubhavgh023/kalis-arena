@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
+	"os"
 )
 
 func GenerateRandomColor() string {
@@ -13,11 +16,28 @@ func GenerateRandomColor() string {
 	return fmt.Sprintf("hsl(%d, %d%%, %d%%)", hue, saturation, lightness)
 }
 
-// func GenerateRandomColor() string {
-// 	// Generate random RGB values
-// 	r := rand.Intn(256) // 0-255
-// 	g := rand.Intn(256)
-// 	b := rand.Intn(256)
-//
-// 	return fmt.Sprintf("rgb(%d, %d, %d)", r, g, b)
-// }
+type canvasConfig struct {
+	WIDTH  int `json:"width"`
+	HEIGHT int `json:"height"`
+}
+
+type worldView struct {
+	CANVAS canvasConfig `json:"canvas"`
+}
+
+func LoadConfig(path string) *worldView {
+	file, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatal("ERROR reading file, err:", err)
+		return nil
+	}
+
+	var config worldView
+	err = json.Unmarshal(file, &config)
+	if err != nil {
+		log.Fatal("ERROR unmarshaling file:", path)
+		return nil
+	}
+
+	return &config
+}

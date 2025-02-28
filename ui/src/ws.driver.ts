@@ -1,6 +1,6 @@
 import { Game } from "./game";
 import { Player } from "./player";
-import { PlayerState } from "./types";
+import { isPlayerState, PlayerState } from "./types";
 
 
 export class WsConnDriver {
@@ -17,8 +17,15 @@ export class WsConnDriver {
         });
 
         this.ws.addEventListener("message", e => {
-            const data = JSON.parse(e.data) as PlayerState;
-            this.handleMessage(data);
+            const data = JSON.parse(e.data);
+
+            if (isPlayerState(data)) {
+                console.log(`Player connected: ${data.id}`);
+                this.handleMessage(data);
+            } else {
+                console.log("Received mismatched data from server");
+                this.ws.close()
+            }
         })
     }
 

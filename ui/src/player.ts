@@ -14,20 +14,20 @@ export class Player {
     constructor(x: number, y: number, color: string) {
         this.x = x;
         this.y = y;
-        this.moveSpeed = 14;
+        this.moveSpeed = 8;
         this.color = color;
         this.size = 20;
 
     };
 
-    handleKeyDown(key: string) {
+    public handleKeyDown(key: string) {
         if (key === "ArrowUp" || key === "w") this.keys.up = true;
         if (key === "ArrowLeft" || key === "a") this.keys.left = true;
         if (key === "ArrowDown" || key === "s") this.keys.down = true;
         if (key === "ArrowRight" || key === "d") this.keys.right = true;
     }
 
-    handleKeyUp(key: string) {
+    public handleKeyUp(key: string) {
         if (key === "ArrowUp" || key === "w") this.keys.up = false;
         if (key === "ArrowLeft" || key === "a") this.keys.left = false;
         if (key === "ArrowDown" || key === "s") this.keys.down = false;
@@ -39,10 +39,10 @@ export class Player {
         if (this.keys.down) this.y += this.moveSpeed
         if (this.keys.left) this.x -= this.moveSpeed
         if (this.keys.right) this.x += this.moveSpeed
-        console.log(this.x, this.y)
+        console.log("[CLIENT]:",this.x, this.y)
     }
 
-    drawPlayer(ctx: CanvasRenderingContext2D) {
+    public drawPlayer(ctx: CanvasRenderingContext2D) {
         // player
         ctx.beginPath();
         ctx.lineWidth = 2;
@@ -52,7 +52,7 @@ export class Player {
         ctx.strokeRect(this.x, this.y, this.size, this.size);
     }
 
-    drawDomain(ctx: CanvasRenderingContext2D) {
+    public drawDomain(ctx: CanvasRenderingContext2D) {
         // Save the entire canvas state before making any changes
         ctx.save();
 
@@ -86,7 +86,7 @@ export class Player {
         ctx.restore();
     }
 
-    checkBound(width: number, height: number) {
+    public checkBound(width: number, height: number) {
         if ((this.x + this.size) >= width) {
             this.x -= this.size
         }

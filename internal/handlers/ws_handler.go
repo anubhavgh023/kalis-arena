@@ -6,12 +6,17 @@ import (
 	"math/rand/v2"
 	"net/http"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/anubhavgh023/kalis-arena/internal/game"
 	"github.com/anubhavgh023/kalis-arena/internal/utils"
 
 	"github.com/gorilla/websocket"
 )
+
+const SERVER_FPS = 30
+const TICK_RATE = time.Second / SERVER_FPS
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -21,13 +26,22 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+var (
+	SHARED_CONFIG = utils.LoadConfig("shared_config.json")
+)
+
 type WsHandler struct {
-	gameState game.GameState
+	gameState  game.GameState
+	inputQueue []game.PlayerMsg
+	tickChan   chan struct{}
+	mu         sync.Mutex
 }
 
 func NewWsHandler(gameState game.GameState) *WsHandler {
 	return &WsHandler{
-		gameState: gameState,
+		gameState:  gameState,
+		inputQueue: make([]game.PlayerMsg, 0, 100),
+		tickChan:   make(chan struct{}),
 	}
 }
 
@@ -39,28 +53,22 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	// // Generate a unique ID for the player
-	// uuid, err := exec.Command("uuidgen").Output()
-	// if err != nil {
-	// 	log.Println("ERROR generating uuid:", err)
-	// }
-
+	//Generate PlayerID,Assigning color & random pos
 	playerID := strconv.Itoa(len(wsh.gameState.GetAllPlayers()) + 1)
-
-	// Assigning color
 	playerColor := utils.GenerateRandomColor()
+	randPosX := (rand.IntN(SHARED_CONFIG.CANVAS.WIDTH) + 100) % SHARED_CONFIG.CANVAS.WIDTH
+	randPosY := (rand.IntN(SHARED_CONFIG.CANVAS.HEIGHT) + 100) % SHARED_CONFIG.CANVAS.HEIGHT
 
-	// Add player to the game state
-	randPosX := rand.IntN(2)*560 + 24
-	randPosY := rand.IntN(2)*160 + 24
 	newPlayer := game.Player{
 		ID:    playerID,
 		X:     randPosX,
 		Y:     randPosY,
 		Color: playerColor,
 	}
+
+	// Add player to the game state
 	wsh.gameState.AddPlayer(playerID, newPlayer, conn)
-	fmt.Printf("[PLAYER JOINED]> ID: %s; X: %d; Y: %d\n", playerID, randPosX, randPosY)
+	// fmt.Printf("[PLAYER JOINED]> ID: %s; X: %d; Y: %d\n", playerID, randPosX, randPosY)
 
 	// Send the playerID & color back to the frontend
 	playerData := game.NewPlayerMsg(
@@ -71,6 +79,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		playerColor,
 	)
 	err = conn.WriteJSON(playerData)
+
 	if err != nil {
 		log.Println("ERROR writing json data:", err)
 	}
@@ -88,6 +97,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 			)
 			if err = conn.WriteJSON(existingPlayerMsg); err != nil {
 				log.Println("ERROR sending existing player data:", err)
+				wsh.gameState.RemovePlayer(playerID)
 				return
 			}
 		}
@@ -103,34 +113,53 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	)
 	wsh.gameState.Broadcast(broadcastMsgPlayerJoined)
 
-	// Handle incoming messages
+	// Handle incoming messages event loop
 	for {
 		var msg game.PlayerMsg
 		err := conn.ReadJSON(&msg)
 		if err != nil {
 			log.Println("Websocket read error:", err)
-
-			wsh.gameState.RemovePlayer(playerID)
-			broadcastMsgPlayerLeave := game.NewPlayerMsg(
-				game.MsgTypePlayerLeave,
-				playerID,
-				randPosX,
-				randPosY,
-				"",
-			)
-			wsh.gameState.Broadcast(broadcastMsgPlayerLeave)
 			break
 		}
+		msg.ID = playerID
 
-		// Update player position
-		broadcastMsgPlayerMove := game.NewPlayerMsg(
-			game.MsgTypePlayerMove,
-			playerID,
-			msg.X,
-			msg.Y,
-			"",
-		)
-		wsh.gameState.Broadcast(broadcastMsgPlayerMove)
-		fmt.Printf("[PLAYER MOVED]> ID: %s; X: %d; Y: %d\n", playerID, msg.X, msg.Y)
+		wsh.mu.Lock()
+		wsh.inputQueue = append(wsh.inputQueue, msg)
+		wsh.mu.Unlock()
+	}
+
+	// Remove players when conn is cloned
+	wsh.gameState.RemovePlayer(playerID)
+	broadcastMsgPlayerLeave := game.NewPlayerMsg(
+		game.MsgTypePlayerLeave,
+		playerID,
+		randPosX,
+		randPosY,
+		"",
+	)
+	wsh.gameState.Broadcast(broadcastMsgPlayerLeave)
+	fmt.Printf("[PLAYER LEFT]> ID: %s\n", playerID)
+}
+
+func (wsh *WsHandler) tick() {
+	// Process all messages in game with each tick
+	if len(wsh.inputQueue) > 0 {
+		for _, msg := range wsh.inputQueue {
+			fmt.Printf("[SERVER]-> Time: %v,TICK MSG: %v\n", time.Now().Second(), msg)
+		}
+	}
+	wsh.inputQueue = wsh.inputQueue[:0]
+}
+
+func (wsh *WsHandler) StartGameLoop() {
+	ticker := time.NewTicker(TICK_RATE)
+	defer ticker.Stop()
+	fmt.Printf("Starting game loop with tick rate: %v\n", TICK_RATE)
+
+	for {
+		select {
+		case <-ticker.C:
+			wsh.tick()
+		}
 	}
 }

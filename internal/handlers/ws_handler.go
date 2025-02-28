@@ -33,7 +33,6 @@ var (
 type WsHandler struct {
 	gameState  game.GameState
 	inputQueue []game.PlayerMsg
-	tickChan   chan struct{}
 	mu         sync.Mutex
 }
 
@@ -41,7 +40,6 @@ func NewWsHandler(gameState game.GameState) *WsHandler {
 	return &WsHandler{
 		gameState:  gameState,
 		inputQueue: make([]game.PlayerMsg, 0, 100),
-		tickChan:   make(chan struct{}),
 	}
 }
 
@@ -142,9 +140,16 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 }
 
 func (wsh *WsHandler) tick() {
+	wsh.mu.Lock()
+	defer wsh.mu.Unlock()
 	// Process all messages in game with each tick
 	if len(wsh.inputQueue) > 0 {
 		for _, msg := range wsh.inputQueue {
+			switch msg.Type {
+			case "playerMoved":
+
+			}
+
 			fmt.Printf("[SERVER]-> Time: %v,TICK MSG: %v\n", time.Now().Second(), msg)
 		}
 	}

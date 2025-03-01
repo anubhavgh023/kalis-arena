@@ -20,7 +20,6 @@ export class WsConnDriver {
             const data = JSON.parse(e.data);
 
             if (isPlayerState(data)) {
-                console.log(`Player connected: ${data.id}`);
                 this.handleMessage(data);
             } else {
                 console.log("Received mismatched data from server");
@@ -28,6 +27,7 @@ export class WsConnDriver {
             }
         })
     }
+
 
     private handleMessage(data: PlayerState) {
         switch (data.type) {
@@ -41,7 +41,11 @@ export class WsConnDriver {
                 break;
             case "playerMoved":
                 const player = this.game.getPlayer(data.id);
-                if (player) {
+                if (player && data.id === this.playerId) {
+                    // reconcile localplayer with server state
+                    player.reconcile(data.x, data.y, data.seq)
+                    console.log("[SERVE RECONCILIATION]: ", player.x, player.y, "seq: ", player.lastSeqNumber);
+                } else if (player) {
                     player.x = data.x;
                     player.y = data.y;
                 }
@@ -52,13 +56,14 @@ export class WsConnDriver {
         }
     }
 
-    public sendPlayerPosition(x: number, y: number, color: string) {
+    public sendPlayerPosition(x: number, y: number, seq: number, color: string) {
         if (this.playerId) {
             const msg: PlayerState = {
                 id: this.playerId,
                 type: "playerMoved",
                 x,
                 y,
+                seq,
                 color,
             };
             this.ws.send(JSON.stringify(msg));

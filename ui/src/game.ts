@@ -29,7 +29,6 @@ export class Game {
         this.mapRender = new MapRenderer();
 
         window.addEventListener("keydown", e => {
-            e.preventDefault();
             if (this.localPlayerID) {
                 const localPlayer = this.players.get(this.localPlayerID)!;
                 localPlayer.handleKeyDown(e.key);
@@ -51,7 +50,7 @@ export class Game {
         if (this.localPlayerID) {
             const localPlayer = this.players.get(this.localPlayerID)!;
             localPlayer.move()
-            this.wsConDriver.sendPlayerPosition(Math.round(localPlayer.x), Math.round(localPlayer.y), "");
+            this.wsConDriver.sendPlayerPosition(Math.round(localPlayer.x), Math.round(localPlayer.y), localPlayer.lastSeqNumber, "");
         }
     }
 

@@ -3,6 +3,7 @@ export type PlayerState = {
     type: "playerId" | "playerJoined" | "playerMoved" | "playerLeft";
     x: number;
     y: number;
+    seq: number;
     color: string;
 }
 
@@ -19,6 +20,7 @@ export function isPlayerState(arg: any): arg is PlayerState {
         && validTypes.has(arg.type)
         && typeof (arg.x) === 'number'
         && typeof (arg.y) === 'number'
+        && typeof (arg.seq) === 'number'
         && typeof (arg.color) === 'string'
 }
 

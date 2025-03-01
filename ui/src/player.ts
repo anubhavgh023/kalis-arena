@@ -11,6 +11,11 @@ export class Player {
     public color: string;
     private size: number;
     private dashOffset: number = 0;
+
+    // client-prediction
+    public lastSeqNumber: number = 0;
+    private pendingInputs: { x: number, y: number, seq: number }[] = [];
+
     constructor(x: number, y: number, color: string) {
         this.x = x;
         this.y = y;
@@ -39,7 +44,25 @@ export class Player {
         if (this.keys.down) this.y += this.moveSpeed
         if (this.keys.left) this.x -= this.moveSpeed
         if (this.keys.right) this.x += this.moveSpeed
-        console.log("[CLIENT]:",this.x, this.y)
+
+        this.lastSeqNumber++;
+        this.pendingInputs.push({ x: this.x, y: this.y, seq: this.lastSeqNumber });
+
+        console.log("[CLIENT PREDICTION]:", this.x, this.y, "seq:", this.lastSeqNumber);
+    }
+
+    // reconcile with server state
+    public reconcile(serverX: number, serverY: number, seq: number) {
+        this.x = serverX;
+        this.y = serverY;
+
+        // remove inputs older than server's authoritive seq
+        this.pendingInputs = this.pendingInputs.filter(input => input.seq > seq);
+
+        for (const input of this.pendingInputs) {
+            this.x = input.x;
+            this.y = input.y;
+        }
     }
 
     public drawPlayer(ctx: CanvasRenderingContext2D) {

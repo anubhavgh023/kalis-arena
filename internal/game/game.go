@@ -8,6 +8,7 @@ import (
 
 type GameState interface {
 	AddPlayer(id string, player Player, conn *websocket.Conn)
+	UpdatePlayer(id string, player Player)
 	RemovePlayer(id string)
 	GetPlayer(id string) (Player, bool)
 	Broadcast(msg PlayerMsg)
@@ -33,6 +34,13 @@ func (gs *gameState) AddPlayer(id string, player Player, conn *websocket.Conn) {
 
 	gs.players[id] = player
 	gs.conns[id] = conn
+}
+
+func (gs *gameState) UpdatePlayer(id string, updatedPlayer Player) {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+
+	gs.players[id] = updatedPlayer
 }
 
 func (gs *gameState) RemovePlayer(id string) {

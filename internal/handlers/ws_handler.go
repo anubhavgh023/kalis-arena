@@ -17,6 +17,7 @@ import (
 
 const SERVER_FPS = 30
 const TICK_RATE = time.Second / SERVER_FPS
+const PLAYER_SIZE = 20
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -58,10 +59,11 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 	randPosY := (rand.IntN(SHARED_CONFIG.CANVAS.HEIGHT) + 100) % SHARED_CONFIG.CANVAS.HEIGHT
 
 	newPlayer := game.Player{
-		ID:    playerID,
-		X:     randPosX,
-		Y:     randPosY,
-		Color: playerColor,
+		ID:      playerID,
+		X:       randPosX,
+		Y:       randPosY,
+		Color:   playerColor,
+		LastSeq: 0,
 	}
 
 	// Add player to the game state
@@ -74,6 +76,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		playerID,
 		randPosX,
 		randPosY,
+		0,
 		playerColor,
 	)
 	err = conn.WriteJSON(playerData)
@@ -91,6 +94,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 				id,
 				player.X,
 				player.Y,
+				0,
 				player.Color,
 			)
 			if err = conn.WriteJSON(existingPlayerMsg); err != nil {
@@ -107,6 +111,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		playerID,
 		randPosX,
 		randPosY,
+		0,
 		playerColor,
 	)
 	wsh.gameState.Broadcast(broadcastMsgPlayerJoined)
@@ -133,6 +138,7 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 		playerID,
 		randPosX,
 		randPosY,
+		0,
 		"",
 	)
 	wsh.gameState.Broadcast(broadcastMsgPlayerLeave)
@@ -145,15 +151,35 @@ func (wsh *WsHandler) tick() {
 	// Process all messages in game with each tick
 	if len(wsh.inputQueue) > 0 {
 		for _, msg := range wsh.inputQueue {
-			switch msg.Type {
-			case "playerMoved":
+			// playerMoved
+			if player, exists := wsh.gameState.GetPlayer(msg.ID); exists {
+				// update player pos only if seq is newer
+				if msg.Seq > player.LastSeq {
+					player.X = msg.X
+					player.Y = msg.Y
+					player.LastSeq = msg.Seq
+				}
 
+				// check collition
+
+				// update game state
+				wsh.gameState.UpdatePlayer(msg.ID, player)
+
+				// broadcast authorative state
+				broadcastMsgPlayerMoved := game.NewPlayerMsg(
+					game.MsgTypePlayerMove,
+					msg.ID,
+					player.X,
+					player.Y,
+					msg.Seq,
+					player.Color,
+				)
+				wsh.gameState.Broadcast(broadcastMsgPlayerMoved)
 			}
-
 			fmt.Printf("[SERVER]-> Time: %v,TICK MSG: %v\n", time.Now().Second(), msg)
 		}
+		wsh.inputQueue = wsh.inputQueue[:0]
 	}
-	wsh.inputQueue = wsh.inputQueue[:0]
 }
 
 func (wsh *WsHandler) StartGameLoop() {

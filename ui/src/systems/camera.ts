@@ -10,8 +10,8 @@ export class Camera {
         this.y = 0
         this.width = width;
         this.height = height;
-        this.maxX = mapWidth;
-        this.maxY = mapHeight;
+        this.maxX = mapWidth - this.width;
+        this.maxY = mapHeight - this.height;
     }
 
     update(px: number, py: number) {

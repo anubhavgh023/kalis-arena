@@ -1,4 +1,4 @@
-import { COLS, GAME_HEIGHT, GAME_WIDTH, ROWS, SPRITE_OFFSET, TILE_SIZE } from "../core/config";
+import { COLS, GAME_HEIGHT, GAME_WIDTH, ROWS, TILE_SIZE } from "../core/config";
 import { GameObject, GameObjectType } from "./gameObject";
 import { Direction } from "../systems/input";
 import { Camera } from "../systems/camera";
@@ -70,8 +70,18 @@ export class Player extends GameObject {
                 this.speedX = 1
             }
 
-            this.gameObj.destPosition.x = nextX;
-            this.gameObj.destPosition.y = nextY;
+            // determine the row,col
+            const col = nextX / TILE_SIZE;
+            const row = nextY / TILE_SIZE;
+
+            // only allow if not colliding with wall
+            if (
+                !this.gameObj.game.world.getTile(this.gameObj.game.world.level1.wallsLayer!, col, row)
+                && !this.gameObj.game.world.getTile(this.gameObj.game.world.level1.propsLayer!, col, row)
+            ) {
+                this.gameObj.destPosition.x = nextX;
+                this.gameObj.destPosition.y = nextY;
+            }
         }
 
         this.isMoving = this.gameObj.game.input.keys.length > 0 || distance > 0;
@@ -83,14 +93,6 @@ export class Player extends GameObject {
                 this.gameObj.sprite.x = 0;
             }
         }
-
-        // if (this.isMoving) {
-        //     if (this.gameObj.sprite.x < this.maxHeroSpriteFrame - 1) {
-        //         this.gameObj.sprite.x++;
-        //     } else {
-        //         this.gameObj.sprite.x = 0;
-        //     }
-        // }
 
         // Update camera to center on player's rendered position
         this.camera.update(

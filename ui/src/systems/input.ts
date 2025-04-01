@@ -1,3 +1,5 @@
+import { Game } from "../core/game";
+
 export enum Direction {
     UP = "UP",
     DOWN = "DOWN",
@@ -7,8 +9,10 @@ export enum Direction {
 
 export class Input {
     public keys: Array<string>;
-    constructor() {
+    public game: Game;
+    constructor(game: Game) {
         this.keys = [];
+        this.game = game;
 
         window.addEventListener("keydown", e => {
             let key = e.key;
@@ -16,6 +20,9 @@ export class Input {
             if (key === "ArrowRight" || key === "d") this.handleKeyDown(Direction.RIGHT);
             if (key === "ArrowUp" || key === "w") this.handleKeyDown(Direction.UP);
             if (key === "ArrowDown" || key === "s") this.handleKeyDown(Direction.DOWN);
+
+            //Toggle debugMode 
+            if (key === " ") this.game.toggleDebugMode();
         });
 
         window.addEventListener("keyup", e => {

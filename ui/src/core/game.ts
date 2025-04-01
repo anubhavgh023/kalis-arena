@@ -2,28 +2,44 @@ import { World } from "./world";
 import { Player } from "../entities/player";
 import { GameObjectType } from "../entities/gameObject";
 import { Input } from "../systems/input";
+// import { WsConnDriver } from "./ws.driver";
 import { GAME_HEIGHT, GAME_WIDTH } from "./config";
-import { JoinScreen } from "../screens/joinScreen";
+// import { JoinScreen } from "../screens/joinScreen";
 
 export class Game {
     public world;
     public input;
     public player: Player | null = null;
 
+    // ws-connection
+    // public players: Map<string, Player>;
+    // public wsConDriver: WsConnDriver;
+    // public localPlayerID: string | null = null;
+
     public eventUpdate: boolean = false;
     public eventTimer: number = 0;
     public eventInterval: number = 200;
-    private ctx: CanvasRenderingContext2D;
+    public ctx: CanvasRenderingContext2D;
+
+    public debugMode: boolean
 
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
         this.world = new World();
-        this.input = new Input();
+        this.input = new Input(this);
+        this.debugMode = false;
+
+        // this.wsConDriver = new WsConnDriver(this);
+        // this.players = new Map();
 
         // new JoinScreen((username) => {
         //     this.startGame(username);
         // })
         this.startGame("testing");
+    }
+
+    toggleDebugMode() {
+        this.debugMode = !this.debugMode;
     }
 
     startGame(username: string) {
@@ -72,16 +88,25 @@ export class Game {
 
             }
 
+            // Translate context to account for camera position
+            this.ctx.save();
+            this.ctx.translate(-this.player.camera.x, -this.player.camera.y);
+
             // Update player
             this.player.update(deltaTime);
 
             // Render world using player's camera
             this.world.drawBackground(this.ctx, this.player.camera);
-            // this.world.drawGrid(this.ctx); // debugging
+            this.world.drawProps(this.ctx, this.player.camera);
+            this.world.drawWalls(this.ctx, this.player.camera);
 
-            // Translate context to account for camera position
-            this.ctx.save();
-            this.ctx.translate(-this.player.camera.x, -this.player.camera.y);
+            // Debug Mode: True || False
+            if (this.debugMode) {
+                this.world.drawGrid(this.ctx, this.player.camera);
+                this.world.drawCollitionGrid(this.ctx, this.player.camera);
+                this.world.drawPropsGrid(this.ctx, this.player.camera);
+            }
+
             this.player.draw(this.ctx);
             this.ctx.restore();
         }

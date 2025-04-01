@@ -18,13 +18,14 @@ h1 {
 }
 
 canvas {
-    border: 2px solid gray;
+    /*border: 2px solid gray;*/
     position: absolute;
     top: 50%;
     left: 50%;
     translate: -50% -50%;
     max-width: 90%;
     max-height: 90%;
+    image-rendering: pixelated;
 }
 
 .assets {

@@ -8,20 +8,18 @@ export class Player extends GameObject {
     public maxHeroSpriteFrame: number;
     public isMoving: boolean;
     public username: string;
-    public isLocal: boolean;
 
     public speedX: number;
     public speedY: number
 
     public camera: Camera;
 
-    constructor(gameObj: GameObjectType, username: string, isLocal: boolean = false) {
+    constructor(gameObj: GameObjectType, username: string) {
         super(gameObj);
         this.speed = 128;
         this.maxHeroSpriteFrame = 8;
         this.isMoving = false;
         this.username = username;
-        this.isLocal = isLocal;
         this.speedX = 0;
         this.speedY = 0;
 
@@ -34,8 +32,8 @@ export class Player extends GameObject {
         )
     }
 
-    update(deltaTime: number) {
-        if (!this.isLocal) return;
+    update(deltaTime: number, isLocal: boolean) {
+        if (!isLocal) return;
 
         let nextX = this.gameObj.destPosition.x;
         let nextY = this.gameObj.destPosition.y;
@@ -92,6 +90,12 @@ export class Player extends GameObject {
             } else {
                 this.gameObj.sprite.x = 0;
             }
+
+            // sending player postition
+            this.gameObj.game.network.sendPlayerPosition(
+                Math.floor(this.gameObj.position.x),
+                Math.floor(this.gameObj.position.y)
+            )
         }
 
         // Update camera to center on player's rendered position
@@ -100,6 +104,7 @@ export class Player extends GameObject {
             this.gameObj.position.y,
             // deltaTime
         );
+
     }
 
     draw(ctx: CanvasRenderingContext2D) {

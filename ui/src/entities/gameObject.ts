@@ -76,7 +76,7 @@ export class GameObject {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        if (this.debug) {
+        if (this.gameObj.game.debugMode) {
             // current hero position
             ctx.fillStyle = "blue"
             ctx.fillRect(
@@ -87,7 +87,7 @@ export class GameObject {
             );
 
             // dest hero position
-            ctx.strokeStyle = "red"
+            ctx.strokeStyle = "yellow"
             ctx.strokeRect(
                 this.gameObj.destPosition.x,
                 this.gameObj.destPosition.y,

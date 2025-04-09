@@ -16,8 +16,8 @@ export class Camera {
 
     update(px: number, py: number) {
         // center the camera to player's position
-        this.x = px - (this.width / 2);
-        this.y = py - (this.height / 2);
+        this.x = px - (this.width / 2) ;
+        this.y = py - (this.height / 2) ;
 
         // clamp to map boundaries
         this.x = Math.max(0, Math.min(this.x, this.maxX))

@@ -2,19 +2,20 @@ import { World } from "./world";
 import { Player } from "../entities/player";
 import { GameObjectType } from "../entities/gameObject";
 import { Input } from "../systems/input";
-// import { WsConnDriver } from "./ws.driver";
 import { GAME_HEIGHT, GAME_WIDTH } from "./config";
+import { Network } from "./network";
 // import { JoinScreen } from "../screens/joinScreen";
+
 
 export class Game {
     public world;
     public input;
     public player: Player | null = null;
+    public localPlayerID: string | null = null;
+    public players: Map<string, Player>
 
-    // ws-connection
-    // public players: Map<string, Player>;
-    // public wsConDriver: WsConnDriver;
-    // public localPlayerID: string | null = null;
+    // network
+    public network: Network
 
     public eventUpdate: boolean = false;
     public eventTimer: number = 0;
@@ -27,15 +28,19 @@ export class Game {
         this.ctx = ctx;
         this.world = new World();
         this.input = new Input(this);
-        this.debugMode = false;
+        this.debugMode = true;
 
-        // this.wsConDriver = new WsConnDriver(this);
-        // this.players = new Map();
+        this.players = new Map();
+
+        // network instance
+        this.network = new Network(this, (id: string) => {
+            console.log(`ID set: ${id}`);
+            this.startGame(`testing`);
+        })
 
         // new JoinScreen((username) => {
         //     this.startGame(username);
         // })
-        this.startGame("testing");
     }
 
     toggleDebugMode() {
@@ -56,7 +61,14 @@ export class Game {
             },
         }
         // Create New Player
-        this.player = new Player(gameObj, username, true);
+        this.player = new Player(gameObj, username);
+
+        // add player to map
+        if (this.localPlayerID) {
+            this.players.set(this.localPlayerID, this.player);
+        }
+        console.log("playerMap:", this.players);
+        console.log("localID:", this.localPlayerID);
 
         // Start the game loop
         let lastTime = 0;
@@ -77,38 +89,48 @@ export class Game {
     render(deltaTime: number) {
         if (!this.player) return;
 
-        if (this.player) {
-            // update animation timer
-            if (this.eventTimer < this.eventInterval) {
-                this.eventTimer += deltaTime;
-                this.eventUpdate = false;
-            } else {
-                this.eventTimer = this.eventInterval % this.eventTimer;
-                this.eventUpdate = true;
+        // update animation timer
+        if (this.eventTimer < this.eventInterval) {
+            this.eventTimer += deltaTime;
+            this.eventUpdate = false;
+        } else {
+            this.eventTimer = this.eventInterval % this.eventTimer;
+            this.eventUpdate = true;
 
-            }
-
-            // Translate context to account for camera position
-            this.ctx.save();
-            this.ctx.translate(-this.player.camera.x, -this.player.camera.y);
-
-            // Update player
-            this.player.update(deltaTime);
-
-            // Render world using player's camera
-            this.world.drawBackground(this.ctx, this.player.camera);
-            this.world.drawProps(this.ctx, this.player.camera);
-            this.world.drawWalls(this.ctx, this.player.camera);
-
-            // Debug Mode: True || False
-            if (this.debugMode) {
-                this.world.drawGrid(this.ctx, this.player.camera);
-                this.world.drawCollitionGrid(this.ctx, this.player.camera);
-                this.world.drawPropsGrid(this.ctx, this.player.camera);
-            }
-
-            this.player.draw(this.ctx);
-            this.ctx.restore();
         }
+
+        // Translate context to account for camera position
+        this.ctx.save();
+        this.ctx.translate(-this.player.camera.x, -this.player.camera.y);
+
+        // // Draw all players
+        // this.players.forEach((player, id) => {
+        //     console.log("ID:", id);
+        //     player.update(deltaTime, true);
+        //     this.world.drawBackground(this.ctx, player.camera);
+        //     this.world.drawProps(this.ctx, player.camera);
+        //     this.world.drawWalls(this.ctx, player.camera);
+        // })
+        //
+        //
+
+
+        // Update player
+        this.player.update(deltaTime, true);
+
+        // Render world using player's camera
+        this.world.drawBackground(this.ctx, this.player.camera);
+        this.world.drawProps(this.ctx, this.player.camera);
+        this.world.drawWalls(this.ctx, this.player.camera);
+
+        // Debug Mode: True || False
+        if (this.debugMode) {
+            this.world.drawGrid(this.ctx, this.player.camera);
+            this.world.drawCollitionGrid(this.ctx, this.player.camera);
+            this.world.drawPropsGrid(this.ctx, this.player.camera);
+        }
+
+        this.player.draw(this.ctx);
+        this.ctx.restore();
     }
 }

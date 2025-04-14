@@ -43,8 +43,8 @@ func (wsh *WsHandler) HandleConns(w http.ResponseWriter, r *http.Request) {
 
 	// Generate PlayerID,Assigning color & random pos
 	playerID := strconv.Itoa(len(wsh.gameState.GetAllPlayers()) + 1)
-	randX := rand.IntN(10)*64 + 1
-	randY := rand.IntN(10)*64 + 1
+	randX := rand.IntN(10)*64 + 10
+	randY := rand.IntN(10)*64 + 10
 
 	// Creating new player
 	newPlayer := game.Player{

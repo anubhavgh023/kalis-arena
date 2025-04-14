@@ -22,7 +22,9 @@ export class Game {
     public eventInterval: number = 200;
     public ctx: CanvasRenderingContext2D;
 
-    public debugMode: boolean
+    public debugMode: boolean;
+
+    // private pendingPlayerData: { id: string; px: number; py: number } | null = null;
 
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
@@ -33,13 +35,22 @@ export class Game {
         this.players = new Map();
 
         // network instance
-        this.network = new Network(this, (id: string) => {
-            console.log(`ID set: ${id}`);
-            this.startGame(`testing`);
+        this.network = new Network(this, (data: { id: string, px: number, py: number }) => {
+            this.startGame(`Player_${data.id}`, data.px, data.py);
         })
 
-        // new JoinScreen((username) => {
-        //     this.startGame(username);
+        // this.network = new Network(this, (data: { id: string, px: number, py: number }) => {
+        //     this.pendingPlayerData = data;
+        //     this.localPlayerID = data.id;
+        // })
+        //
+        // new JoinScreen((username: string) => {
+        //     if (this.pendingPlayerData) {
+        //         this.startGame(username, this.pendingPlayerData.px, this.pendingPlayerData.py);
+        //         this.pendingPlayerData = null;
+        //     } else {
+        //         console.log("No server data available")
+        //     }
         // })
     }
 
@@ -47,10 +58,10 @@ export class Game {
         this.debugMode = !this.debugMode;
     }
 
-    startGame(username: string) {
+    startGame(username: string, px: number, py: number) {
         const gameObj: GameObjectType = {
             game: this,
-            position: { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
+            position: { x: px, y: py },
             // sprite-sheet
             sprite: {
                 x: 0,
@@ -60,15 +71,13 @@ export class Game {
                 image: document.querySelector("#hero1") as HTMLImageElement
             },
         }
-        // Create New Player
-        this.player = new Player(gameObj, username);
 
-        // add player to map
+        // Add local player to map
         if (this.localPlayerID) {
+            // Create New Player
+            this.player = new Player(gameObj, username);
             this.players.set(this.localPlayerID, this.player);
         }
-        console.log("playerMap:", this.players);
-        console.log("localID:", this.localPlayerID);
 
         // Start the game loop
         let lastTime = 0;
@@ -86,6 +95,79 @@ export class Game {
 
     }
 
+    addRemotePlayer(id: string, px: number, py: number, username: string = `Player_${id}`) {
+        if (id === this.localPlayerID) return; // skip local player
+        const gameObj: GameObjectType = {
+            game: this,
+            position: { x: px, y: py },
+            sprite: {
+                x: 0,
+                y: 2,
+                width: 64,
+                height: 64,
+                image: document.querySelector("#hero1") as HTMLImageElement,
+            },
+        };
+        const player = new Player(gameObj, username);
+        this.players.set(id, player);
+    }
+
+
+    // // Update remote player
+    // updateRemotePlayer(id: string, x: number, y: number) {
+    //     const player = this.players.get(id);
+    //     if (player && id !== this.localPlayerID) {
+    //         player.gameObj.position.x = x;
+    //         player.gameObj.position.y = y;
+    //
+    //         player.gameObj.destPosition.x = x;
+    //         player.gameObj.destPosition.y = y;
+    //     }
+    // }
+
+    // Update remote player
+    updateRemotePlayer(id: string, x: number, y: number) {
+        const player = this.players.get(id);
+
+        if (player && id !== this.localPlayerID) {
+            // Track previous position for movement detection
+            const prevX = player.gameObj.position.x;
+            const prevY = player.gameObj.position.y;
+
+            // Align positions to grid
+            const newX = x + 2;
+            const newY = y + 2;
+            player.gameObj.position.x = newX;
+            player.gameObj.position.y = newY;
+            player.gameObj.destPosition.x = newX;
+            player.gameObj.destPosition.y = newY;
+
+            // Set isMoving based on position change
+            player.isMoving = newX !== prevX || newY !== prevY;
+
+            // Update sprite orientation and animation
+            if (player.isMoving) {
+                // Set direction: right=11, left=9, down=10, up=8
+                if (newX > prevX) player.gameObj.sprite.y = 11; // Right
+                else if (newX < prevX) player.gameObj.sprite.y = 9; // Left
+                else if (newY > prevY) player.gameObj.sprite.y = 10; // Down
+                else if (newY < prevY) player.gameObj.sprite.y = 8; // Up
+            } else {
+                // Reset to idle frame when stopped
+                player.gameObj.sprite.x = 0;
+                player.isMoving = false;
+            }
+        }
+    }
+
+
+    // Remove remote player 
+    removeRemotePlayer(id: string) {
+        if (this.players.delete(id)) {
+            console.log(`Removed player ${id}`);
+        }
+    }
+
     render(deltaTime: number) {
         if (!this.player) return;
 
@@ -94,29 +176,14 @@ export class Game {
             this.eventTimer += deltaTime;
             this.eventUpdate = false;
         } else {
-            this.eventTimer = this.eventInterval % this.eventTimer;
+            this.eventTimer -= this.eventInterval;
             this.eventUpdate = true;
-
         }
 
         // Translate context to account for camera position
         this.ctx.save();
         this.ctx.translate(-this.player.camera.x, -this.player.camera.y);
 
-        // // Draw all players
-        // this.players.forEach((player, id) => {
-        //     console.log("ID:", id);
-        //     player.update(deltaTime, true);
-        //     this.world.drawBackground(this.ctx, player.camera);
-        //     this.world.drawProps(this.ctx, player.camera);
-        //     this.world.drawWalls(this.ctx, player.camera);
-        // })
-        //
-        //
-
-
-        // Update player
-        this.player.update(deltaTime, true);
 
         // Render world using player's camera
         this.world.drawBackground(this.ctx, this.player.camera);
@@ -130,7 +197,12 @@ export class Game {
             this.world.drawPropsGrid(this.ctx, this.player.camera);
         }
 
-        this.player.draw(this.ctx);
+        // Draw all players
+        this.players.forEach((player) => {
+            player.draw(this.ctx);
+            player.update(deltaTime, player === this.player);
+        })
+
         this.ctx.restore();
     }
 }

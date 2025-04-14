@@ -1,15 +1,10 @@
 package game
 
-// type Player struct {
-// 	ID      string `json:"id"`
-// 	X       int    `json:"x"`
-// 	Y       int    `json:"y"`
-// 	LastSeq string `json:"seq,omitempty"`
-// 	Color   string `json:"color"`
-// }
+import "github.com/gorilla/websocket"
 
 type Player struct {
-	ID      string
-	X       int
-	Y       int
+	ID   string
+	Conn *websocket.Conn
+	X    int
+	Y    int
 }

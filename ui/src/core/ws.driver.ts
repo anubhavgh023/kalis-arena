@@ -28,7 +28,7 @@ export class WsConnDriver {
 
     private handleMessage(data: PlayerState) {
         switch (data.type) {
-            case "playerId":
+            case "playerID":
                 console.log("SET: playerId")
                 // this.playerId = data.id;
                 // this.game.setLocalPlayerId(data.id)

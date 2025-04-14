@@ -1,14 +1,13 @@
 package game
 
 import (
+	"log"
 	"sync"
-
-	"github.com/gorilla/websocket"
 )
 
 type GameState interface {
-	AddPlayer(id string, player Player, conn *websocket.Conn)
-	UpdatePlayer(id string, player Player)
+	AddPlayer(player Player)
+	UpdatePlayer(player Player)
 	RemovePlayer(id string)
 	GetPlayer(id string) (Player, bool)
 	Broadcast(msg PlayerMsg)
@@ -17,39 +16,40 @@ type GameState interface {
 
 type gameState struct {
 	players map[string]Player
-	conns   map[string]*websocket.Conn
 	mu      sync.RWMutex
 }
 
+// Init NewGameState
 func NewGameState() GameState {
 	return &gameState{
 		players: make(map[string]Player),
-		conns:   make(map[string]*websocket.Conn),
 	}
 }
 
-func (gs *gameState) AddPlayer(id string, player Player, conn *websocket.Conn) {
+// Add Player to gamestate
+func (gs *gameState) AddPlayer(player Player) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
-	gs.players[id] = player
-	gs.conns[id] = conn
+	gs.players[player.ID] = player
 }
 
-func (gs *gameState) UpdatePlayer(id string, updatedPlayer Player) {
+// Update Player
+func (gs *gameState) UpdatePlayer(player Player) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
-	gs.players[id] = updatedPlayer
+	gs.players[player.ID] = player
 }
 
+// Remove Player from gamestate
 func (gs *gameState) RemovePlayer(id string) {
 	gs.mu.Lock()
 	delete(gs.players, id)
-	delete(gs.conns, id)
 	gs.mu.Unlock()
 }
 
+// Get Player by id
 func (gs *gameState) GetPlayer(id string) (Player, bool) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
@@ -58,15 +58,20 @@ func (gs *gameState) GetPlayer(id string) (Player, bool) {
 	return player, exists
 }
 
+// Broadcast to every player in gamestate
 func (gs *gameState) Broadcast(msg PlayerMsg) {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
-	for _, conn := range gs.conns {
-		conn.WriteJSON(msg)
+	for _, player := range gs.players {
+		if err := player.Conn.WriteJSON(msg); err != nil {
+			log.Println("ERROR Broadcasting: ", err)
+			player.Conn.Close()
+		}
 	}
 }
 
+// Get all players map
 func (gs *gameState) GetAllPlayers() map[string]Player {
 	gs.mu.RLock()
 	defer gs.mu.RUnlock()

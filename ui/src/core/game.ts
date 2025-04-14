@@ -4,7 +4,7 @@ import { GameObjectType } from "../entities/gameObject";
 import { Input } from "../systems/input";
 import { GAME_HEIGHT, GAME_WIDTH } from "./config";
 import { Network } from "./network";
-// import { JoinScreen } from "../screens/joinScreen";
+import { JoinScreen } from "../screens/joinScreen";
 
 
 export class Game {
@@ -24,34 +24,34 @@ export class Game {
 
     public debugMode: boolean;
 
-    // private pendingPlayerData: { id: string; px: number; py: number } | null = null;
+    private pendingPlayerData: { id: string; px: number; py: number } | null = null;
 
     constructor(ctx: CanvasRenderingContext2D) {
         this.ctx = ctx;
         this.world = new World();
         this.input = new Input(this);
-        this.debugMode = true;
+        this.debugMode = false;
 
         this.players = new Map();
 
-        // network instance
+        // Testing: network instance
+        // this.network = new Network(this, (data: { id: string, px: number, py: number }) => {
+        //     this.startGame(`Player_${data.id}`, data.px, data.py);
+        // })
+
         this.network = new Network(this, (data: { id: string, px: number, py: number }) => {
-            this.startGame(`Player_${data.id}`, data.px, data.py);
+            this.pendingPlayerData = data;
+            this.localPlayerID = data.id;
         })
 
-        // this.network = new Network(this, (data: { id: string, px: number, py: number }) => {
-        //     this.pendingPlayerData = data;
-        //     this.localPlayerID = data.id;
-        // })
-        //
-        // new JoinScreen((username: string) => {
-        //     if (this.pendingPlayerData) {
-        //         this.startGame(username, this.pendingPlayerData.px, this.pendingPlayerData.py);
-        //         this.pendingPlayerData = null;
-        //     } else {
-        //         console.log("No server data available")
-        //     }
-        // })
+        new JoinScreen((username: string) => {
+            if (this.pendingPlayerData) {
+                this.startGame(username, this.pendingPlayerData.px, this.pendingPlayerData.py);
+                this.pendingPlayerData = null;
+            } else {
+                console.log("No server data available")
+            }
+        })
     }
 
     toggleDebugMode() {

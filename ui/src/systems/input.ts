@@ -22,7 +22,13 @@ export class Input {
             if (key === "ArrowDown" || key === "s") this.handleKeyDown(Direction.DOWN);
 
             //Toggle debugMode 
-            if (key === " ") this.game.toggleDebugMode();
+            let adminPlayer = false;
+            for (const [_, player] of this.game.players) {
+                if (player.username === "@anubhav") {
+                    adminPlayer = true;
+                }
+            }
+            if (key === " " && adminPlayer) this.game.toggleDebugMode();
         });
 
         window.addEventListener("keyup", e => {
